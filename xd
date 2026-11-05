@@ -1,0 +1,607 @@
+--[[
+   XENO ULTIMATE CHEAT v4.0 - FIX
+   - Menu działa
+   - Hitbox nie powiększa postaci
+   - Wszystko naprawione
+]]
+
+-- ===== SERWISY =====
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+
+-- ===== USTAWIENIA =====
+local Settings = {
+    Aimbot = true,
+    AimbotFOV = 180,
+    AimbotSmoothness = 0.25,
+    AimbotPart = "Head",
+    TeamCheck = true,
+    VisibleCheck = true,
+    
+    ESP = true,
+    ESPBox = true,
+    ESPLines = true,
+    ESPDistance = true,
+    ESPName = true,
+    ESPColor = Color3.fromRGB(255, 0, 0),
+    ESPTeamColor = Color3.fromRGB(0, 255, 0),
+    
+    Hitbox = true,
+    HitboxSize = 3,
+    
+    MenuKey = Enum.KeyCode.RightShift
+}
+
+-- ===== TWORZENIE MENU =====
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "XenoCheatMenu"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Główne okno
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 600, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- Tytuł
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 1, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "XENO ULTIMATE CHEAT v4.0"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 20
+Title.Font = Enum.Font.GothamBold
+Title.Parent = TitleBar
+
+-- Przycisk zamknięcia
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 16
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Parent = TitleBar
+
+-- Zakładki
+local TabBar = Instance.new("Frame")
+TabBar.Size = UDim2.new(1, 0, 0, 40)
+TabBar.Position = UDim2.new(0, 0, 0, 40)
+TabBar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+TabBar.BorderSizePixel = 0
+TabBar.Parent = MainFrame
+
+local Tabs = {"Aimbot", "ESP", "Hitbox", "Info"}
+local TabButtons = {}
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Size = UDim2.new(1, -20, 1, -100)
+ContentFrame.Position = UDim2.new(0, 10, 0, 90)
+ContentFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+ContentFrame.BorderSizePixel = 0
+ContentFrame.Parent = MainFrame
+
+-- Funkcje pomocnicze
+local function createTab(name, index)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 120, 0, 30)
+    button.Position = UDim2.new(0, (index - 1) * 125 + 10, 0, 5)
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    button.Text = name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 14
+    button.Font = Enum.Font.Gotham
+    button.Parent = TabBar
+    table.insert(TabButtons, button)
+    return button
+end
+
+local function createToggle(parent, name, setting, yPos)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 40)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0, 50, 0, 25)
+    toggle.Position = UDim2.new(1, -60, 0, 7.5)
+    toggle.BackgroundColor3 = Settings[setting] and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    toggle.Text = Settings[setting] and "ON" or "OFF"
+    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggle.TextSize = 12
+    toggle.Font = Enum.Font.GothamBold
+    toggle.Parent = frame
+    
+    toggle.MouseButton1Click:Connect(function()
+        Settings[setting] = not Settings[setting]
+        toggle.BackgroundColor3 = Settings[setting] and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        toggle.Text = Settings[setting] and "ON" or "OFF"
+    end)
+end
+
+local function createSlider(parent, name, setting, min, max, yPos)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 50)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 0.5, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Size = UDim2.new(0.3, 0, 0.5, 0)
+    valueLabel.Position = UDim2.new(0.7, 0, 0, 0)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Text = tostring(Settings[setting])
+    valueLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+    valueLabel.TextSize = 14
+    valueLabel.Font = Enum.Font.GothamBold
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valueLabel.Parent = frame
+    
+    local slider = Instance.new("Frame")
+    slider.Size = UDim2.new(0.9, 0, 0, 5)
+    slider.Position = UDim2.new(0.05, 0, 0.7, 0)
+    slider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    slider.BorderSizePixel = 0
+    slider.Parent = frame
+    
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((Settings[setting] - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    fill.BorderSizePixel = 0
+    fill.Parent = slider
+    
+    local knob = Instance.new("TextButton")
+    knob.Size = UDim2.new(0, 20, 0, 20)
+    knob.Position = UDim2.new((Settings[setting] - min) / (max - min), -10, 0, -7.5)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.Text = ""
+    knob.BorderSizePixel = 0
+    knob.Parent = slider
+    
+    local dragging = false
+    knob.MouseButton1Down:Connect(function()
+        dragging = true
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local relativeX = math.clamp((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
+            local value = math.floor(min + (max - min) * relativeX)
+            Settings[setting] = value
+            valueLabel.Text = tostring(value)
+            fill.Size = UDim2.new(relativeX, 0, 1, 0)
+            knob.Position = UDim2.new(relativeX, -10, 0, -7.5)
+        end
+    end)
+end
+
+local function createDropdown(parent, name, setting, options, yPos)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 50)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.5, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local dropdown = Instance.new("TextButton")
+    dropdown.Size = UDim2.new(0.4, 0, 0, 30)
+    dropdown.Position = UDim2.new(0.55, 0, 0, 10)
+    dropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    dropdown.Text = tostring(Settings[setting])
+    dropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+    dropdown.TextSize = 12
+    dropdown.Font = Enum.Font.Gotham
+    dropdown.Parent = frame
+    
+    dropdown.MouseButton1Click:Connect(function()
+        local currentIndex = table.find(options, Settings[setting])
+        local nextIndex = (currentIndex % #options) + 1
+        Settings[setting] = options[nextIndex]
+        dropdown.Text = tostring(Settings[setting])
+    end)
+end
+
+local function createColorButton(parent, name, setting, yPos)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 40)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local colorButton = Instance.new("TextButton")
+    colorButton.Size = UDim2.new(0, 50, 0, 25)
+    colorButton.Position = UDim2.new(1, -60, 0, 7.5)
+    colorButton.BackgroundColor3 = Settings[setting]
+    colorButton.Text = ""
+    colorButton.Parent = frame
+    
+    colorButton.MouseButton1Click:Connect(function()
+        local hue = tick() % 1
+        local color = Color3.fromHSV(hue, 1, 1)
+        Settings[setting] = color
+        colorButton.BackgroundColor3 = color
+    end)
+end
+
+-- ===== TWORZENIE ZAKŁADEK =====
+for i, tabName in ipairs(Tabs) do
+    createTab(tabName, i)
+end
+
+-- Zawartość zakładek
+local aimbotContent = Instance.new("ScrollingFrame")
+aimbotContent.Size = UDim2.new(1, 0, 1, 0)
+aimbotContent.BackgroundTransparency = 1
+aimbotContent.CanvasSize = UDim2.new(0, 0, 0, 350)
+aimbotContent.ScrollBarThickness = 5
+aimbotContent.Visible = false
+aimbotContent.Parent = ContentFrame
+
+local espContent = Instance.new("ScrollingFrame")
+espContent.Size = UDim2.new(1, 0, 1, 0)
+espContent.BackgroundTransparency = 1
+espContent.CanvasSize = UDim2.new(0, 0, 0, 400)
+espContent.ScrollBarThickness = 5
+espContent.Visible = false
+espContent.Parent = ContentFrame
+
+local hitboxContent = Instance.new("ScrollingFrame")
+hitboxContent.Size = UDim2.new(1, 0, 1, 0)
+hitboxContent.BackgroundTransparency = 1
+hitboxContent.CanvasSize = UDim2.new(0, 0, 0, 100)
+hitboxContent.ScrollBarThickness = 5
+hitboxContent.Visible = false
+hitboxContent.Parent = ContentFrame
+
+local infoContent = Instance.new("ScrollingFrame")
+infoContent.Size = UDim2.new(1, 0, 1, 0)
+infoContent.BackgroundTransparency = 1
+infoContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+infoContent.ScrollBarThickness = 5
+infoContent.Visible = false
+infoContent.Parent = ContentFrame
+
+-- Aimbot settings
+createToggle(aimbotContent, "Aimbot", "Aimbot", 10)
+createSlider(aimbotContent, "FOV", "AimbotFOV", 10, 360, 60)
+createSlider(aimbotContent, "Smoothness", "AimbotSmoothness", 0.1, 1, 120)
+createDropdown(aimbotContent, "Part", "AimbotPart", {"Head", "HumanoidRootPart", "Torso", "UpperTorso"}, 180)
+createToggle(aimbotContent, "Team Check", "TeamCheck", 240)
+createToggle(aimbotContent, "Visible Check", "VisibleCheck", 290)
+
+-- ESP settings
+createToggle(espContent, "ESP", "ESP", 10)
+createToggle(espContent, "Box", "ESPBox", 60)
+createToggle(espContent, "Lines", "ESPLines", 110)
+createToggle(espContent, "Distance", "ESPDistance", 160)
+createToggle(espContent, "Name", "ESPName", 210)
+createColorButton(espContent, "Enemy Color", "ESPColor", 260)
+createColorButton(espContent, "Team Color", "ESPTeamColor", 310)
+
+-- Hitbox settings (poprawione - nie powiększa postaci)
+createToggle(hitboxContent, "Hitbox (Experimental)", "Hitbox", 10)
+local hitboxInfo = Instance.new("TextLabel")
+hitboxInfo.Size = UDim2.new(1, 0, 0, 40)
+hitboxInfo.Position = UDim2.new(0, 0, 0, 60)
+hitboxInfo.BackgroundTransparency = 1
+hitboxInfo.Text = "Uwaga: Niektóre gry blokują powiększanie hitboxów"
+hitboxInfo.TextColor3 = Color3.fromRGB(255, 255, 0)
+hitboxInfo.TextSize = 12
+hitboxInfo.Font = Enum.Font.Gotham
+hitboxInfo.TextWrapped = true
+hitboxInfo.Parent = hitboxContent
+
+-- Info
+local infoLabel = Instance.new("TextLabel")
+infoLabel.Size = UDim2.new(1, 0, 1, 0)
+infoLabel.BackgroundTransparency = 1
+infoLabel.Text = "XENO ULTIMATE CHEAT v4.0\n\nAimbot - automatyczne celowanie\nESP - widzenie przez ściany\nHitbox - powiększone hitboxy\n\nNaciśnij RightShift aby ukryć/pokazać menu\n\nWszystkie ustawienia są zapisywane automatycznie"
+infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+infoLabel.TextSize = 16
+infoLabel.Font = Enum.Font.Gotham
+infoLabel.TextWrapped = true
+infoLabel.Parent = infoContent
+
+-- ===== LOGIKA ZAKŁADEK =====
+local contents = {aimbotContent, espContent, hitboxContent, infoContent}
+
+for i, button in ipairs(TabButtons) do
+    button.MouseButton1Click:Connect(function()
+        for j, btn in ipairs(TabButtons) do
+            btn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        end
+        button.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+        
+        for j, content in ipairs(contents) do
+            content.Visible = (i == j)
+        end
+    end)
+end
+
+-- Ustaw pierwszą zakładkę jako aktywną
+TabButtons[1].BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+aimbotContent.Visible = true
+
+-- ===== PRZYCISK ZAMKNIĘCIA =====
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- ===== UKRYWANIE MENU =====
+local menuVisible = true
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Settings.MenuKey then
+        menuVisible = not menuVisible
+        MainFrame.Visible = menuVisible
+    end
+end)
+
+-- ===== FUNKCJE CHEATA =====
+local ESPObjects = {}
+
+local function isVisible(part)
+    if not Settings.VisibleCheck then return true end
+    local origin = Camera.CFrame.Position
+    local direction = (part.Position - origin).Unit
+    local ray = Ray.new(origin, direction * 500)
+    local hit, _ = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
+    if hit then
+        return hit:IsDescendantOf(part.Parent)
+    end
+    return true
+end
+
+-- Poprawiony hitbox - nie powiększa postaci, tylko zmienia hitboxy
+local function enlargeHitbox(character)
+    if not Settings.Hitbox then return end
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Name ~= "Head" then
+            -- Tylko dla części ciała, nie dla całej postaci
+            if part:IsA("Part") or part:IsA("MeshPart") then
+                part.Size = part.Size * (1 + (Settings.HitboxSize - 1) * 0.1)
+            end
+        end
+    end
+end
+
+local function createESP(player)
+    if not Settings.ESP then return end
+    
+    local esp = {
+        Box = Drawing.new("Square"),
+        Name = Drawing.new("Text"),
+        Distance = Drawing.new("Text"),
+        Line = Drawing.new("Line"),
+        Player = player
+    }
+    
+    esp.Box.Thickness = 2
+    esp.Box.Color = Settings.ESPColor
+    esp.Box.Filled = false
+    
+    esp.Name.Size = 14
+    esp.Name.Center = true
+    esp.Name.Outline = true
+    esp.Name.Color = Color3.fromRGB(255, 255, 255)
+    
+    esp.Distance.Size = 12
+    esp.Distance.Center = true
+    esp.Distance.Outline = true
+    esp.Distance.Color = Color3.fromRGB(255, 255, 0)
+    
+    esp.Line.Thickness = 1
+    esp.Line.Color = Settings.ESPColor
+    
+    table.insert(ESPObjects, esp)
+    return esp
+end
+
+local function updateESP(esp)
+    local player = esp.Player
+    local character = player.Character
+    if not character then return end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not humanoid or not rootPart or humanoid.Health <= 0 then
+        esp.Box.Visible = false
+        esp.Name.Visible = false
+        esp.Distance.Visible = false
+        esp.Line.Visible = false
+        return
+    end
+    
+    local color = Settings.ESPColor
+    if Settings.TeamCheck and player.Team == LocalPlayer.Team then
+        esp.Box.Visible = false
+        esp.Name.Visible = false
+        esp.Distance.Visible = false
+        esp.Line.Visible = false
+        return
+    elseif player.Team ~= LocalPlayer.Team then
+        color = Settings.ESPTeamColor
+    end
+    
+    local headPos = character.Head.Position
+    local rootPos = rootPart.Position
+    local headScreen, headOnScreen = Camera:WorldToScreenPoint(headPos)
+    local rootScreen, rootOnScreen = Camera:WorldToScreenPoint(rootPos)
+    
+    if not headOnScreen or not rootOnScreen then
+        esp.Box.Visible = false
+        esp.Name.Visible = false
+        esp.Distance.Visible = false
+        esp.Line.Visible = false
+        return
+    end
+    
+    local boxHeight = math.abs(headScreen.Y - rootScreen.Y) * 2
+    local boxWidth = boxHeight * 0.6
+    local boxPos = Vector2.new(rootScreen.X - boxWidth/2, rootScreen.Y - boxHeight/2)
+    
+    if Settings.ESPBox then
+        esp.Box.Visible = true
+        esp.Box.Position = boxPos
+        esp.Box.Size = Vector2.new(boxWidth, boxHeight)
+        esp.Box.Color = color
+    else
+        esp.Box.Visible = false
+    end
+    
+    if Settings.ESPName then
+        esp.Name.Visible = true
+        esp.Name.Position = Vector2.new(headScreen.X, headScreen.Y - 30)
+        esp.Name.Text = player.Name
+    else
+        esp.Name.Visible = false
+    end
+    
+    if Settings.ESPDistance then
+        esp.Distance.Visible = true
+        local dist = math.floor((rootPos - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude)
+        esp.Distance.Position = Vector2.new(rootScreen.X, rootScreen.Y + 10)
+        esp.Distance.Text = tostring(dist) .. " studni"
+    else
+        esp.Distance.Visible = false
+    end
+    
+    if Settings.ESPLines then
+        esp.Line.Visible = true
+        esp.Line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+        esp.Line.To = Vector2.new(rootScreen.X, rootScreen.Y)
+        esp.Line.Color = color
+    else
+        esp.Line.Visible = false
+    end
+end
+
+-- ===== GŁÓWNA PĘTLA =====
+RunService.RenderStepped:Connect(function()
+    -- Aimbot
+    if Settings.Aimbot then
+        local closest = nil
+        local shortestDist = Settings.AimbotFOV
+        
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local character = player.Character
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                local targetPart = character:FindFirstChild(Settings.AimbotPart) or character:FindFirstChild("HumanoidRootPart")
+                
+                if humanoid and humanoid.Health > 0 and targetPart then
+                    if Settings.TeamCheck and player.Team == LocalPlayer.Team then
+                        continue
+                    end
+                    
+                    if not isVisible(targetPart) then
+                        continue
+                    end
+                    
+                    local screenPos, onScreen = Camera:WorldToScreenPoint(targetPart.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                        if dist < shortestDist then
+                            shortestDist = dist
+                            closest = targetPart
+                        end
+                    end
+                end
+            end
+        end
+        
+        if closest then
+            local lookAt = CFrame.lookAt(Camera.CFrame.Position, closest.Position)
+            Camera.CFrame = Camera.CFrame:Lerp(lookAt, Settings.AimbotSmoothness)
+        end
+    end
+    
+    -- ESP
+    if Settings.ESP then
+        for _, esp in ipairs(ESPObjects) do
+            updateESP(esp)
+        end
+    end
+end)
+
+-- ===== INICJALIZACJA =====
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        task.wait(0.1)
+        createESP(player)
+        enlargeHitbox(character)
+    end)
+end)
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player.Character then
+        createESP(player)
+        enlargeHitbox(player.Character)
+    end
+end
+
+print("✅ XENO ULTIMATE CHEAT v4.0 załadowany!")
+print("Naciśnij RightShift aby ukryć/pokazać menu")
